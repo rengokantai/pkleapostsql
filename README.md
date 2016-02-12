@@ -219,3 +219,38 @@ To really execute and get the cost in real time, use EXPLAIN (ANALYZE).
 ```
 EXPLAIN (ANALYZE) SELECT * FROM test WHERE id >= 10 and id < 20;
 ```
+
+- cp13
+To insert, update, or delete rows, the executeUpdate method can be used:
+```java
+int rowCount = statement.executeUpdate("DELETE FROM account");
+```
+The returned integer value is the number of rows that were affected by the update or delete operation.
+```java
+String sql = "INSERT INTO account (first_name, last_name, email, password) VALUES ('John', 'Doe', '@.com', '123')";
+statement.executeUpdate(sql, new String[]{"account_id"});
+statement.executeUpdate(sql, new int[]{1}); //assuming that account_id is the first column
+```
+Obtain generated indexes.
+```java
+ResultSet newKeys = statement.getGeneratedKeys();
+if(newKeys.next()){
+  int newAccountID = newKeys.getInt("account_id");
+}
+```
+
+Obtain metadata:
+```java
+ResultSet result = statement.executeQuery("select * from account");
+ResultSetMetaData metaData = result.getMetaData();
+
+int columnCount = metaData.getColumnCount();
+for(int c=1;c<=columnCount; c++)
+{
+  String columnName = metaData.getColumnName(c);
+
+  int columnType = metaData.getColumnType(c);
+  String columnClass = metaData.getColumnClassName(c);
+  String columnTypeName = metaData.getColumnTypeName(c);
+}
+```
