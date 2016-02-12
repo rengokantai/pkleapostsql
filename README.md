@@ -195,3 +195,27 @@ benchtest
 pgbench -i test_database
 pgbench -c 4 -T 50 test_database   //4 client, 50 second duration test
 ```
+
+In general, the ```NOT IN``` construct can sometimes cause performance issues because postgres cannot use indexes to evaluate the query.
+
+
+batch insert test: analyze, explain
+```
+CREATE TABLE test (id INT PRIMARY KEY,name TEXT NOT NULL);
+INSERT INTO test SELECT n , md5 (random()::text) FROM generate_series (1, 10) AS foo(n);  // function name can be arbitrary
+ANALYZE test;
+EXPLAIN SELECT * FROM test;
+```
+
+calculate the cost:  
+formula: no of relation pages * seq_page_cost + no of rows * cpu_tuple_cost
+```
+relpages*current_setting('seq_page_cost')::numeric + reltuples*current_setting('cpu_tuple_cost')::numeric as cost
+FROM pg_class
+WHERE relname='test';
+```
+
+To really execute and get the cost in real time, use EXPLAIN (ANALYZE).
+```
+EXPLAIN (ANALYZE) SELECT * FROM test WHERE id >= 10 and id < 20;
+```
