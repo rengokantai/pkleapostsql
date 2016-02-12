@@ -129,3 +129,69 @@ END;
 $$ Language plpgsql;
 test=# SELECT decrypt(encrypt('hello'));
 ```
+
+- cp9
+```
+\set ECHO_HIDDEN
+\z account
+```
+
+dump database:
+first check whether version are consistent.
+```
+SELECT version (); //in psql
+```
+```
+pg_dump --version //in cmd
+```
+dump command:
+```
+pg_dump -h localhost -U postgres -d ke > ke.sql
+```
+
+==
+kill other sessions
+```
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() AND pid <> pg_backend_pid();
+```
+
+Note: current_database() = database() in mysql  
+
+If one is not able to drop a certain database because clients try to connect to, can execute the following query
+```
+UPDATE pg_database set datallowconn = 'false' WHERE datname = 'database to drop';
+```
+
+
+postgresql.conf file config: ex
+```
+SELECT current_setting('work_mem');    -- must single quote!
+show work_mem;
+SELECT set_config('work_mem', '8 MB', true); -- means only current transaction is affected
+```
+
+
+- cp10
+some config:
+```
+max_connections
+work_mem
+shared_buffers
+```
+hard disk setting:
+```
+fsync   -- setting forces each transaction to be written to the hard disk after each commit
+checkpoint_segments
+```
+
+planner
+```
+effective_cache_size
+random_page_cost
+```
+
+benchtest
+```
+pgbench -i test_database
+pgbench -c 4 -T 50 test_database   //4 client, 50 second duration test
+```
