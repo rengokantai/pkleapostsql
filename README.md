@@ -1,17 +1,37 @@
-#### pkleapostsql
+## pkleapsql
 
-- cp8
+###Chapter 8. PostgreSQL Security
+####PostgreSQL default access privileges
 ```
 select current_user;
 select tableowner from pg_tables where tablename= 'a';
 select * from pg_stat_user_tables;
 select * from pg_user;
 ```
+
+For mistrusted languages, such as plpythonu, the user cannot create functions unless he/she is a superuser. Ex
+```
+CREATE FUNCTION min (a integer, b integer)
+  RETURNS integer
+AS $$
+  if a < b:
+    return a
+  else:
+    return b
+$$ LANGUAGE plpythonu;
+// ERROR:  permission denied
+```
+
 revoke public schema privileges
 ```
 revoke all privileges on schema public from public;
 ```
+[stackoverflow similar issue](http://dba.stackexchange.com/questions/35316/why-is-a-new-user-allowed-to-create-a-table)
 
+
+
+
+The database's role system can be used to partially implement this logic by delegating the authentication to another role after the connection is established
 ```
 set session authorization user_name;
 ```
@@ -22,25 +42,26 @@ grant username to rolename
 grant usage on schema dbname to rolename
 ```
 
-==
-
+####PostgreSQL security levels
+#####Database security level
 ```
-revoke all ON DATABASE dbname FROM rolename;
+revoke all ON DATABASE dbname FROM public;
 ```
 basic connect authorization:
 ```
 grant connect on database dbname TO rolename;
 ```
 
-schema security level:
+#####schema security level
 ```
 grant usage/create on schema schemanameto rolename;
 ```
-table security level: (insert/update/delete/trigger/reference/truncate)
+#####table security level: (insert/update/delete/trigger/reference/truncate)
 ```
 grant all on tablenameto role;
 ```
-==
+####Encrypting data
+#####PostgreSQL role password encryption
 ```
 create role rolename1 with login password '';
 create role rolename1 with login password '';
@@ -52,6 +73,9 @@ alter role ke1 rename to ke2;
 alter role ke1 with password '';
 ```
 
+
+#####pgcrypto
+######One-way encryption
 md5 function, basic encryption
 ```
 create table account(id int,password text);
@@ -64,8 +88,6 @@ create extension pgcrypto
 ```
 select (md5('pass')=password) as auth from account;
 ```
-===
-
 using crypt and gen_salt.
 ```
 truncate account;
@@ -82,7 +104,7 @@ enable timing
 \timing
 select crypt('pass',gen_salt('bf',8));
 ```
-
+######Two-way encryption
 list all functions of encryption and decryption
 ```
 \df encrypt
@@ -130,7 +152,7 @@ $$ Language plpgsql;
 test=# SELECT decrypt(encrypt('hello'));
 ```
 
-- cp9
+###Chapter 9. The PostgreSQL System Catalog and System Administration Functions
 ```
 \set ECHO_HIDDEN
 \z account
