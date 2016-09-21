@@ -98,7 +98,6 @@ And this is very weird
 select crypt('pass','123acv')='123acv' as auth from account;
 ```
 
-==
 enable timing
 ```
 \timing
@@ -153,11 +152,13 @@ test=# SELECT decrypt(encrypt('hello'));
 ```
 
 ###Chapter 9. The PostgreSQL System Catalog and System Administration Functions
+####The system catalog
 ```
 \set ECHO_HIDDEN
 \z account
 ```
 
+####Getting the database cluster and client tools version
 dump database:
 first check whether version are consistent.
 ```
@@ -171,20 +172,20 @@ dump command:
 pg_dump -h localhost -U postgres -d ke > ke.sql
 ```
 
-==
+####Terminating and canceling user sessions
 kill other sessions
 ```
 SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() AND pid <> pg_backend_pid();
 ```
-
-Note: current_database() = database() in mysql  
+pg_cancel_backend only cancels the current query and pg_terminate_backend kills the entire connection.  
+Note: current_database() = database() in mysql     
 
 If one is not able to drop a certain database because clients try to connect to, can execute the following query
 ```
 UPDATE pg_database set datallowconn = 'false' WHERE datname = 'database to drop';
 ```
 
-
+####Setting and getting database cluster settings
 postgresql.conf file config: ex
 ```
 SELECT current_setting('work_mem');    -- must single quote!
@@ -193,34 +194,36 @@ SELECT set_config('work_mem', '8 MB', true); -- means only current transaction i
 ```
 
 
-- cp10
+###Chapter 10. Optimizing Database Performance
+####PostgreSQL configuration tuning
+#####Memory settings
 some config:
 ```
 max_connections
 work_mem
 shared_buffers
 ```
-hard disk setting:
+#####hard disk setting:
 ```
 fsync   -- setting forces each transaction to be written to the hard disk after each commit
 checkpoint_segments
 ```
 
-planner
+#####Planner-related settings
 ```
 effective_cache_size
 random_page_cost
 ```
 
-benchtest
+#####Benchmarking 
 ```
 pgbench -i test_database
 pgbench -c 4 -T 50 test_database   //4 client, 50 second duration test
 ```
-
+####Tuning PostgreSQL queries
 In general, the ```NOT IN``` construct can sometimes cause performance issues because postgres cannot use indexes to evaluate the query.
 
-
+#####The EXPLAIN command and execution plan
 batch insert test: analyze, explain
 ```
 CREATE TABLE test (id INT PRIMARY KEY,name TEXT NOT NULL);
@@ -242,7 +245,9 @@ To really execute and get the cost in real time, use EXPLAIN (ANALYZE).
 EXPLAIN (ANALYZE) SELECT * FROM test WHERE id >= 10 and id < 20;
 ```
 
-- cp13
+###Chapter 13. PostgreSQL JDBC
+####Issuing a query and processing the results
+#####Static statements
 To insert, update, or delete rows, the executeUpdate method can be used:
 ```java
 int rowCount = statement.executeUpdate("DELETE FROM account");
@@ -260,7 +265,7 @@ if(newKeys.next()){
   int newAccountID = newKeys.getInt("account_id");
 }
 ```
-
+#####Getting information about the table structure
 Obtain metadata:
 ```java
 ResultSet result = statement.executeQuery("select * from account");
